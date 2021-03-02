@@ -3,9 +3,9 @@ use array_init::array_init;
 use std::collections::VecDeque;
 use std::marker::Copy;
 
-pub struct Kad<IpPort: Copy, Socket> {
+pub struct Kad<'a, IpPort: Copy, Socket> {
   bucket: [VecDeque<IpPort>; 256],
-  socket: Socket,
+  socket: &'a Socket,
 }
 
 fn comm_bit_prefix(x: &[u8], y: &[u8]) -> u32 {
@@ -20,8 +20,8 @@ fn comm_bit_prefix(x: &[u8], y: &[u8]) -> u32 {
   n
 }
 
-impl<IpPort: Copy, Socket> Kad<IpPort, Socket> {
-  pub fn new(socket: Socket) -> Kad<IpPort, Socket> {
+impl<'a, IpPort: Copy, Socket> Kad<'a, IpPort, Socket> {
+  pub fn new(socket: &Socket) -> Kad<IpPort, Socket> {
     Kad {
       socket,
       bucket: array_init(|_| VecDeque::new()),

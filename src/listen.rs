@@ -46,8 +46,7 @@ impl ToBytes for SocketAddr {
 }
 
 pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
-  let socket_is_nat = UdpSocket::bind("0.0.0.0:0").await.unwrap();
-  let kad = Kad::<SocketAddrV4, UdpSocket>::new(socket_is_nat);
+  let kad = Kad::<SocketAddrV4, UdpSocket>::new(&socket);
 
   macro_rules! send_to {
     ($val:expr, $addr:expr) => {
