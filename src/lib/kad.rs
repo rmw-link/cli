@@ -35,7 +35,7 @@ impl<'a, Addr: Copy, Socket> Kad<'a, Addr, Socket> {
     );
     println!(
       "comm_bit_prefix {:?}",
-      comm_bit_prefix(&b"0230"[..], &b"8232"[..])
+      comm_bit_prefix(&b"112"[..], &b"7232"[..])
     );
     println!("comm_bit_prefix {:?}", comm_bit_prefix(pk, pk));
     let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
