@@ -1,5 +1,5 @@
+use crate::var::ed25519::ED25519;
 use array_init::array_init;
-use crate::var::ed25519::{ED25519};
 use std::collections::VecDeque;
 use std::marker::Copy;
 

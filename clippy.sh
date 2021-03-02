@@ -11,7 +11,7 @@ if ! hash cargo-clippy 2>/dev/null; then
   rustup component add clippy
 fi
 
-sync
+gsync
 
 cargo +nightly clippy --fix -Z unstable-options
 

@@ -29,7 +29,6 @@ pub trait ToBytes {
   fn to_bytes(&self) -> Bytes;
 }
 
-
 impl ToBytes for SocketAddr {
   fn to_bytes(&self) -> Bytes {
     let mut r = BytesMut::with_capacity(16 + 2);
