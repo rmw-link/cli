@@ -3,8 +3,9 @@ use array_init::array_init;
 use std::collections::VecDeque;
 use std::marker::Copy;
 use std::cmp::PartialEq;
+use std::fmt::Debug;
 
-pub struct Kad<'a, Addr: PartialEq+Copy, Socket> {
+pub struct Kad<'a, Addr: Debug+PartialEq+Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
 }
@@ -21,7 +22,7 @@ pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
   n
 }
 
-impl<'a, Addr: PartialEq+Copy, Socket> Kad<'a, Addr, Socket> {
+impl<'a, Addr: Debug+PartialEq+Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn new(socket: &Socket) -> Kad<Addr, Socket> {
     Kad {
       socket,
