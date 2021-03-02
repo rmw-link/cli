@@ -2,8 +2,9 @@ use crate::var::ed25519::ED25519;
 use array_init::array_init;
 use std::collections::VecDeque;
 use std::marker::Copy;
+use std::cmp::PartialEq;
 
-pub struct Kad<'a, Addr: Copy, Socket> {
+pub struct Kad<'a, Addr: PartialEq+Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
 }
@@ -20,7 +21,7 @@ pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
   n
 }
 
-impl<'a, Addr: Copy, Socket> Kad<'a, Addr, Socket> {
+impl<'a, Addr: PartialEq+Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn new(socket: &Socket) -> Kad<Addr, Socket> {
     Kad {
       socket,
@@ -40,6 +41,10 @@ impl<'a, Addr: Copy, Socket> Kad<'a, Addr, Socket> {
     println!("comm_bit_prefix {:?}", comm_bit_prefix(pk, pk));
     let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
     println!("comm_bit_prefix {:?}", n);
-    self.bucket[n].push_back(addr);
+    let v = &mut self.bucket[n];
+    if let None = v.iter().position(|&x|x==addr) {
+        v.push_back(addr);
+    }
+    println!("bucket {:?}",v)
   }
 }
