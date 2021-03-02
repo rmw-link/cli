@@ -1,5 +1,5 @@
-use crate::lib::kad::Kad;
 use crate::lib::connecting::Connecting;
+use crate::lib::kad::Kad;
 use crate::lib::leading_zero;
 use crate::lib::now::sec;
 use crate::var::cmd;
@@ -14,10 +14,9 @@ use ed25519_dalek_blake2b::{PublicKey as Ed25519PublicKey, Signature, Signer, Ve
 use rand::{thread_rng, Rng};
 use std::convert::TryInto;
 use std::net::ToSocketAddrs;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 use std::time::Duration;
 use x25519_dalek::{PublicKey, StaticSecret};
-
 
 extern crate std;
 
@@ -30,17 +29,6 @@ pub trait ToBytes {
   fn to_bytes(&self) -> Bytes;
 }
 
-fn comm_bit_prefix(x: &[u8], y: &[u8]) -> u32 {
-  let mut n = 0;
-  for (a, b) in x.iter().zip(y) {
-    let t = (*a ^ *b).count_zeros();
-    n += t;
-    if t != 8 {
-      break;
-    }
-  }
-  n
-}
 
 impl ToBytes for SocketAddr {
   fn to_bytes(&self) -> Bytes {
@@ -247,16 +235,6 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
                             if let Ok(sign) = plain[32..].try_into() as Result<[u8; 64], _> {
                               let sign = Signature::from(sign);
                               if epk.verify(secret.as_bytes(), &sign).is_ok() {
-                                // todo 测试是否是公网IP
-                                println!(
-                                  "comm_bit_prefix {:?}",
-                                  comm_bit_prefix(&b"1230"[..], &b"1232"[..])
-                                );
-                                println!("comm_bit_prefix {:?}", comm_bit_prefix(epkb, epkb));
-                                println!(
-                                  "comm_bit_prefix {:?}",
-                                  comm_bit_prefix(epkb, ED25519.public.as_bytes())
-                                );
                                 kad.add(epkb, src);
                               }
                             }
