@@ -1,10 +1,10 @@
-use std::net::{SocketAddr,SocketAddrV4};
 use crate::var::ed25519::ED25519;
 use array_init::array_init;
 use std::cmp::PartialEq;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::marker::Copy;
+use std::net::{SocketAddr, SocketAddrV4};
 
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
@@ -25,7 +25,7 @@ pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
 
 impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn new(socket: &Socket) -> Kad<Addr, Socket> {
-      Kad {
+    Kad {
       socket,
       bucket: array_init(|_| VecDeque::new()),
     }
