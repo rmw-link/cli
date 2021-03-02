@@ -104,6 +104,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "array-init"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a51c983d65b6691893a791e55aa8bda43bbd9b11f947e5a9581710362277cc95"
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1538,6 +1544,7 @@ name = "rmw-srv"
 version = "0.0.1"
 dependencies = [
  "aes-gcm",
+ "array-init",
  "async-std",
  "base64",
  "blake3",

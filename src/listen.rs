@@ -1,3 +1,4 @@
+use crate::lib::kad::Kad;
 use crate::lib::connecting::Connecting;
 use crate::lib::leading_zero;
 use crate::lib::now::sec;
@@ -13,9 +14,10 @@ use ed25519_dalek_blake2b::{PublicKey as Ed25519PublicKey, Signature, Signer, Ve
 use rand::{thread_rng, Rng};
 use std::convert::TryInto;
 use std::net::ToSocketAddrs;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::time::Duration;
 use x25519_dalek::{PublicKey, StaticSecret};
+
 
 extern crate std;
 
@@ -56,7 +58,10 @@ impl ToBytes for SocketAddr {
   }
 }
 
-pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
+pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
+  let socket_is_nat = UdpSocket::bind("0.0.0.0:0").await.unwrap();
+  let kad = Kad::<SocketAddrV4, UdpSocket>::new(socket_is_nat);
+
   macro_rules! send_to {
     ($val:expr, $addr:expr) => {
       Await!(socket.send_to(&$val, $addr));
@@ -64,19 +69,19 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
   }
 
   for addr in "47.104.79.244:30110".to_socket_addrs().unwrap() {
-    connecting.add(addr);
-    match addr.ip() {
-      IpAddr::V4(ip) => {
+    match addr {
+      SocketAddr::V4(addr) => {
+        connecting.add(addr);
         let mut buf = BytesMut::with_capacity(17);
         buf.put_u8(cmd::ping);
         buf.put_u16(VERSION);
         buf.put_u64(sec());
         buf.put_u16(addr.port());
-        buf.put_u32(ip.into());
+        buf.put_u32((*addr.ip()).into());
         send_to!(buf, addr);
       }
-      IpAddr::V6(ip) => {
-        warn!("ipv6 not supported {:?}", ip);
+      SocketAddr::V6(addr) => {
+        warn!("ipv6 not supported {:?}", addr);
       }
     }
   }
@@ -108,8 +113,9 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
             StaticSecret::from(*seed.as_bytes())
           }};
         }
-        match src.ip() {
-          IpAddr::V4(ip) => {
+        match src {
+          SocketAddr::V4(src) => {
+            let ip = *src.ip();
             let port = src.port();
             macro_rules! time_hash {
               ($sec:expr) => {{
@@ -251,6 +257,7 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
                                   "comm_bit_prefix {:?}",
                                   comm_bit_prefix(epkb, ED25519.public.as_bytes())
                                 );
+                                kad.add(epkb, src);
                               }
                             }
                           }
@@ -268,8 +275,8 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
               info!("{:?} pinged alive", src);
             }
           }
-          IpAddr::V6(ip) => {
-            warn!("ipv6 {:?}", ip)
+          SocketAddr::V6(src) => {
+            warn!("ipv6 {:?}", src)
           }
         }
       }
@@ -278,7 +285,7 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddr>) {
   }
 }
 
-pub async fn timer(connecting: &Connecting<SocketAddr>) {
+pub async fn timer(connecting: &Connecting<SocketAddrV4>) {
   let mut interval = stream::interval(Duration::from_secs(1));
   while interval.next().await.is_some() {
     connecting.clean();
@@ -286,7 +293,7 @@ pub async fn timer(connecting: &Connecting<SocketAddr>) {
 }
 
 pub async fn listen(socket: UdpSocket) {
-  let connecting = Connecting::<SocketAddr>::new(TIMEOUT);
+  let connecting = Connecting::<SocketAddrV4>::new(TIMEOUT);
   let srv = udp(socket, &connecting);
   srv.join(timer(&connecting)).await;
 }
