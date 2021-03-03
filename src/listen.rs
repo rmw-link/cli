@@ -269,9 +269,16 @@ pub async fn timer(
   kad: &Mutex<Kad<'_, SocketAddrV4, UdpSocket>>,
 ) {
   let mut interval = stream::interval(Duration::from_secs(1));
+  let mut every20 = 0;
+  
   while interval.next().await.is_some() {
     connecting.clean();
-    kad.lock().unwrap().clean();
+    
+    every20 = (every20+1)%20;
+    
+    if every20 == 0 {
+      kad.lock().unwrap().clean();
+    }
   }
 }
 
