@@ -56,7 +56,7 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
   fn id(&mut self) -> u64 {
     let mut now = (milli() - *BEGIN_MILLI) * 16;
     if now <= self._id {
-      now = self._id + 1;
+      now = self._id;
     }
     self._id = now;
     now
