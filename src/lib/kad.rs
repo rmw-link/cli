@@ -40,6 +40,8 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     skipmap.insert(2, "x2");
 
     println!("kad clean : {:?}", skipmap);
+    println!("get {} {:?}", 1, skipmap.get(&1));
+    println!("get {} {:?}", 3, skipmap.get(&3));
     
   }
   pub fn add(&mut self, pk: &[u8], addr: Addr) {
