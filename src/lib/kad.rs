@@ -1,18 +1,18 @@
 use crate::var::ed25519::ED25519;
 use array_init::array_init;
+use skiplist::SkipMap;
 use std::cmp::PartialEq;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::marker::Copy;
 use std::net::{SocketAddr, SocketAddrV4};
-use skiplist::SkipMap;
 
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
 }
 
-const TIMEOUT:usize = 60;
+const TIMEOUT: usize = 60;
 
 pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
   let mut n: usize = 0;
@@ -42,7 +42,6 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     println!("kad clean : {:?}", skipmap);
     println!("get {} {:?}", 1, skipmap.get(&1));
     println!("get {} {:?}", 3, skipmap.get(&3));
-    
   }
   pub fn add(&mut self, pk: &[u8], addr: Addr) {
     // todo 测试是否是公网IP
