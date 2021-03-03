@@ -5,8 +5,8 @@ use skiplist::SkipMap;
 use std::cmp::Ord;
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
-use std::marker::Copy;
 use std::fmt::Debug;
+use std::marker::Copy;
 
 #[derive(Debug)]
 pub struct SendAliveId {
@@ -20,7 +20,7 @@ pub struct Kad<'a, Addr: Debug + Ord + Copy, Socket> {
   alive: SkipMap<u64, Addr>,
   send: SkipMap<u64, Addr>,
   addr_id: BTreeMap<Addr, SendAliveId>,
-  _id:u64
+  _id: u64,
 }
 
 const TIMEOUT: usize = 60;
@@ -49,14 +49,14 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       alive: SkipMap::<u64, Addr>::new(),
       send: SkipMap::<u64, Addr>::new(),
       addr_id: BTreeMap::<Addr, SendAliveId>::new(),
-      _id:0
+      _id: 0,
     }
   }
 
   fn id(&mut self) -> u64 {
     let mut now = (milli() - *BEGIN_MILLI) * 16;
     if now <= self._id {
-        now = self._id + 1;
+      now = self._id + 1;
     }
     self._id = now;
     now
@@ -65,21 +65,27 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn ping(&mut self) {
     let now = self.id();
     let skipmap = &mut self.alive;
-
   }
 
   pub fn add(&mut self, pk: &[u8], addr: Addr) {
-    if self.addr_id.contains_key(&addr){
-        return
+    if self.addr_id.contains_key(&addr) {
+      return;
     }
     let id = self.id();
-    self.addr_id.insert(addr, SendAliveId {
-        alive_id:id,
-        send_id:id
-    });
+    self.addr_id.insert(
+      addr,
+      SendAliveId {
+        alive_id: id,
+        send_id: id,
+      },
+    );
     self.alive.insert(id, addr);
     self.send.insert(id, addr);
     let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
     self.bucket[n].push_back(addr);
+    println!("send {:?}", self.alive);
+    println!("alive {:?}", self.send);
+    println!("bucket {:?}", self.bucket);
+    println!("addr_id {:?}", self.addr_id);
   }
 }
