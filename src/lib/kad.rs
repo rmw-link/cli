@@ -10,7 +10,7 @@ use std::net::{SocketAddr, SocketAddrV4};
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
-  expire: SkipMap<u128, &'a str>
+  expire: SkipMap<u128, &'a str>,
 }
 
 const TIMEOUT: usize = 60;
@@ -32,7 +32,7 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     Kad {
       socket,
       bucket: array_init(|_| VecDeque::new()),
-      expire: SkipMap::<u128, &str>::new()
+      expire: SkipMap::<u128, &str>::new(),
     }
   }
   pub fn clean(&mut self) {
