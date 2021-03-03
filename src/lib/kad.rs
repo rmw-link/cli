@@ -1,4 +1,4 @@
-use crate::lib::now::milli;       
+use crate::lib::now::milli;
 use crate::var::ed25519::ED25519;
 use array_init::array_init;
 use skiplist::SkipMap;
@@ -30,7 +30,7 @@ pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
 }
 
 lazy_static! {
-pub static ref BEGIN_MILLI:u64 = milli();
+  pub static ref BEGIN_MILLI: u64 = milli();
 }
 
 impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
@@ -42,12 +42,12 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       send: SkipMap::<u64, &str>::new(),
     }
   }
-  pub fn alive(&mut self) {
+  pub fn ping(&mut self) {
     let skipmap = &mut self.alive;
-    let now = (milli()-*BEGIN_MILLI)*16;
+    let now = (milli() - *BEGIN_MILLI) * 16;
 
     skipmap.insert(now, "");
-    skipmap.insert(now+1, "");
+    skipmap.insert(now + 1, "");
 
     println!("kad clean : {:?}", skipmap);
     println!("get {} {:?}", 1, skipmap.get(&1));

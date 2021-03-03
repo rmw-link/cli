@@ -272,7 +272,7 @@ pub async fn timer(
 
   while interval.next().await.is_some() {
     connecting.clean();
-    kad.lock().unwrap().alive();
+    kad.lock().unwrap().ping();
   }
 }
 
