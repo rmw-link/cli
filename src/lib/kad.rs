@@ -9,9 +9,10 @@ use std::fmt::Debug;
 use std::marker::Copy;
 
 #[derive(Debug)]
-pub struct SendAliveId {
+pub struct AddrMeta {
   alive_id: u64,
   send_id: u64,
+  pk: [u8; 32],
 }
 
 pub struct Kad<'a, Addr: Debug + Ord + Copy, Socket> {
@@ -19,13 +20,13 @@ pub struct Kad<'a, Addr: Debug + Ord + Copy, Socket> {
   socket: &'a Socket,
   alive: SkipMap<u64, Addr>,
   send: SkipMap<u64, Addr>,
-  addr_id: BTreeMap<Addr, SendAliveId>,
+  addr_id: BTreeMap<Addr, AddrMeta>,
   _id: u64,
 }
 
 const TIMEOUT: usize = 60;
 
-pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
+pub fn comm_bit_prefix<const N: usize>(x: &[u8; N], y: &[u8; N]) -> usize {
   let mut n: usize = 0;
   for (a, b) in x.iter().zip(y) {
     let t = (*a ^ *b).count_zeros() as usize;
@@ -48,7 +49,7 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       bucket: array_init(|_| VecDeque::new()),
       alive: SkipMap::<u64, Addr>::new(),
       send: SkipMap::<u64, Addr>::new(),
-      addr_id: BTreeMap::<Addr, SendAliveId>::new(),
+      addr_id: BTreeMap::<Addr, AddrMeta>::new(),
       _id: 0,
     }
   }
@@ -67,21 +68,22 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     let skipmap = &mut self.alive;
   }
 
-  pub fn add(&mut self, pk: &[u8], addr: Addr) {
+  pub fn add(&mut self, pk: [u8; 32], addr: Addr) {
     if self.addr_id.contains_key(&addr) {
       return;
     }
     let id = self.id();
     self.addr_id.insert(
       addr,
-      SendAliveId {
+      AddrMeta {
         alive_id: id,
         send_id: id,
+        pk,
       },
     );
     self.alive.insert(id, addr);
     self.send.insert(id, addr);
-    let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
+    let n = comm_bit_prefix(&pk, &ED25519.public.as_bytes());
     self.bucket[n].push_back(addr);
     println!("send {:?}", self.alive);
     println!("alive {:?}", self.send);

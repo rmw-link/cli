@@ -232,10 +232,12 @@ pub async fn udp(
                           //sign.extend(&xpk.as_bytes()[..]);
                           let epkb = &plain[..32];
                           if let Ok(epk) = Ed25519PublicKey::from_bytes(epkb) {
-                            if let Ok(sign) = plain[32..].try_into() as Result<[u8; 64], _> {
-                              let sign = Signature::from(sign);
-                              if epk.verify(secret.as_bytes(), &sign).is_ok() {
-                                kad.lock().unwrap().add(epkb, src);
+                            if let Ok(epkb) = epkb.try_into() as Result<[u8; 32], _> {
+                              if let Ok(sign) = plain[32..].try_into() as Result<[u8; 64], _> {
+                                let sign = Signature::from(sign);
+                                if epk.verify(secret.as_bytes(), &sign).is_ok() {
+                                  kad.lock().unwrap().add(epkb, src);
+                                }
                               }
                             }
                           }
