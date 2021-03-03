@@ -8,7 +8,7 @@ use std::net::{SocketAddr, SocketAddrV4};
 
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
-  socket: &'a Socket
+  socket: &'a Socket,
 }
 
 pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
@@ -30,9 +30,7 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       bucket: array_init(|_| VecDeque::new()),
     }
   }
-  pub fn clean(&mut self){
-
-  }
+  pub fn clean(&mut self) {}
   pub fn add(&mut self, pk: &[u8], addr: Addr) {
     // todo 测试是否是公网IP
     let n = comm_bit_prefix(pk, ED25519.public.as_bytes());

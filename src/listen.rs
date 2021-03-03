@@ -1,6 +1,5 @@
 use crate::lib::connecting::Connecting;
 use crate::lib::kad::Kad;
-use std::sync::Mutex;
 use crate::lib::leading_zero;
 use crate::lib::now::sec;
 use crate::var::cmd;
@@ -16,6 +15,7 @@ use rand::{thread_rng, Rng};
 use std::convert::TryInto;
 use std::net::ToSocketAddrs;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
+use std::sync::Mutex;
 use std::time::Duration;
 use x25519_dalek::{PublicKey, StaticSecret};
 
@@ -47,10 +47,10 @@ impl ToBytes for SocketAddr {
 }
 
 pub async fn udp(
-socket: &UdpSocket, connecting: &Connecting<SocketAddrV4>, 
-kad: &Mutex<Kad<'_,SocketAddrV4, UdpSocket>>
+  socket: &UdpSocket,
+  connecting: &Connecting<SocketAddrV4>,
+  kad: &Mutex<Kad<'_, SocketAddrV4, UdpSocket>>,
 ) {
-
   macro_rules! send_to {
     ($val:expr, $addr:expr) => {
       Await!(socket.send_to(&$val, $addr));
@@ -264,7 +264,10 @@ kad: &Mutex<Kad<'_,SocketAddrV4, UdpSocket>>
   }
 }
 
-pub async fn timer(connecting: &Connecting<SocketAddrV4>, kad: &Mutex<Kad<'_,SocketAddrV4, UdpSocket>>) {
+pub async fn timer(
+  connecting: &Connecting<SocketAddrV4>,
+  kad: &Mutex<Kad<'_, SocketAddrV4, UdpSocket>>,
+) {
   let mut interval = stream::interval(Duration::from_secs(1));
   while interval.next().await.is_some() {
     connecting.clean();
