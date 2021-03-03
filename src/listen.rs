@@ -1,5 +1,6 @@
 use crate::lib::connecting::Connecting;
 use crate::lib::kad::Kad;
+use std::sync::Mutex;
 use crate::lib::leading_zero;
 use crate::lib::now::sec;
 use crate::var::cmd;
@@ -45,8 +46,10 @@ impl ToBytes for SocketAddr {
   }
 }
 
-pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
-  let mut kad = Kad::<SocketAddrV4, UdpSocket>::new(&socket);
+pub async fn udp(
+socket: &UdpSocket, connecting: &Connecting<SocketAddrV4>, 
+kad: &Mutex<Kad<'_,SocketAddrV4, UdpSocket>>
+) {
 
   macro_rules! send_to {
     ($val:expr, $addr:expr) => {
@@ -233,7 +236,7 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
                             if let Ok(sign) = plain[32..].try_into() as Result<[u8; 64], _> {
                               let sign = Signature::from(sign);
                               if epk.verify(secret.as_bytes(), &sign).is_ok() {
-                                kad.add(epkb, src);
+                                kad.lock().unwrap().add(epkb, src);
                               }
                             }
                           }
@@ -261,15 +264,17 @@ pub async fn udp(socket: UdpSocket, connecting: &Connecting<SocketAddrV4>) {
   }
 }
 
-pub async fn timer(connecting: &Connecting<SocketAddrV4>) {
+pub async fn timer(connecting: &Connecting<SocketAddrV4>, kad: &Mutex<Kad<'_,SocketAddrV4, UdpSocket>>) {
   let mut interval = stream::interval(Duration::from_secs(1));
   while interval.next().await.is_some() {
     connecting.clean();
+    kad.lock().unwrap().clean();
   }
 }
 
 pub async fn listen(socket: UdpSocket) {
   let connecting = Connecting::<SocketAddrV4>::new(TIMEOUT);
-  let srv = udp(socket, &connecting);
-  srv.join(timer(&connecting)).await;
+  let kad = Mutex::new(Kad::<SocketAddrV4, UdpSocket>::new(&socket));
+  let srv = udp(&socket, &connecting, &kad);
+  srv.join(timer(&connecting, &kad)).await;
 }
