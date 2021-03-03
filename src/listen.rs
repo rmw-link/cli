@@ -45,7 +45,6 @@ impl ToBytes for SocketAddr {
     r.into()
   }
 }
-
 pub async fn udp(
   socket: &UdpSocket,
   connecting: &Connecting<SocketAddrV4>,

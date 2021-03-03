@@ -1,25 +1,26 @@
 use crate::lib::now::milli;
 use crate::var::ed25519::ED25519;
-use std::collections::HashMap;
 use array_init::array_init;
 use skiplist::SkipMap;
-use std::cmp::PartialEq;
+use std::cmp::Ord;
+use std::collections::BTreeMap;
 use std::collections::VecDeque;
-use std::fmt::Debug;
 use std::marker::Copy;
-use std::net::{SocketAddr, SocketAddrV4};
+use std::fmt::Debug;
 
+#[derive(Debug)]
 pub struct SendAliveId {
-   alive_id : u64,
-   send_id : u64,
+  alive_id: u64,
+  send_id: u64,
 }
 
-pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
+pub struct Kad<'a, Addr: Debug + Ord + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
-  alive: SkipMap<u64, &'a str>,
-  send: SkipMap<u64, &'a str>,
-  addr_id: HashMap<Addr, SendAliveId>
+  alive: SkipMap<u64, Addr>,
+  send: SkipMap<u64, Addr>,
+  addr_id: BTreeMap<Addr, SendAliveId>,
+  _id:u64
 }
 
 const TIMEOUT: usize = 60;
@@ -40,36 +41,45 @@ lazy_static! {
   pub static ref BEGIN_MILLI: u64 = milli();
 }
 
-impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
+impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn new(socket: &Socket) -> Kad<Addr, Socket> {
     Kad {
       socket,
       bucket: array_init(|_| VecDeque::new()),
-      alive: SkipMap::<u64, &str>::new(),
-      send: SkipMap::<u64, &str>::new(),
-      addr_id: HashMap::<Addr, SendAliveId>::new(),
+      alive: SkipMap::<u64, Addr>::new(),
+      send: SkipMap::<u64, Addr>::new(),
+      addr_id: BTreeMap::<Addr, SendAliveId>::new(),
+      _id:0
     }
   }
-  
+
+  fn id(&mut self) -> u64 {
+    let mut now = (milli() - *BEGIN_MILLI) * 16;
+    if now <= self._id {
+        now = self._id + 1;
+    }
+    self._id = now;
+    now
+  }
+
   pub fn ping(&mut self) {
+    let now = self.id();
     let skipmap = &mut self.alive;
-    let now = (milli() - *BEGIN_MILLI) * 16;
 
-    skipmap.insert(now, "");
-    skipmap.insert(now + 1, "");
-
-    println!("kad clean : {:?}", skipmap);
-    println!("get {} {:?}", 1, skipmap.get(&1));
-    println!("get {} {:?}", 3, skipmap.get(&3));
   }
-  pub fn add(&mut self, pk: &[u8], addr: Addr) {
-    // todo 测试是否是公网IP
-    let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
-    println!("comm_bit_prefix {:?}", n);
-    let v = &mut self.bucket[n];
 
-    if let None = v.iter().position(|&x| x == addr) {
-      v.push_back(addr);
+  pub fn add(&mut self, pk: &[u8], addr: Addr) {
+    if self.addr_id.contains_key(&addr){
+        return
     }
+    let id = self.id();
+    self.addr_id.insert(addr, SendAliveId {
+        alive_id:id,
+        send_id:id
+    });
+    self.alive.insert(id, addr);
+    self.send.insert(id, addr);
+    let n = comm_bit_prefix(pk, ED25519.public.as_bytes());
+    self.bucket[n].push_back(addr);
   }
 }
