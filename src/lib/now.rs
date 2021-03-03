@@ -7,8 +7,6 @@ pub fn _duration() -> Duration {
 pub fn sec() -> u64 {
   _duration().as_secs()
 }
-/*
-pub fn milli() -> u128 {
-  _duration().as_millis()
+pub fn milli() -> u64 {
+  _duration().as_millis() as u64
 }
-*/

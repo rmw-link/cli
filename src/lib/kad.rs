@@ -1,3 +1,4 @@
+use crate::lib::now::milli;       
 use crate::var::ed25519::ED25519;
 use array_init::array_init;
 use skiplist::SkipMap;
@@ -10,7 +11,8 @@ use std::net::{SocketAddr, SocketAddrV4};
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
-  expire: SkipMap<u128, &'a str>,
+  alive: SkipMap<u64, &'a str>,
+  send: SkipMap<u64, &'a str>,
 }
 
 const TIMEOUT: usize = 60;
@@ -27,19 +29,25 @@ pub fn comm_bit_prefix(x: &[u8], y: &[u8]) -> usize {
   n
 }
 
+lazy_static! {
+pub static ref BEGIN_MILLI:u64 = milli();
+}
+
 impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
   pub fn new(socket: &Socket) -> Kad<Addr, Socket> {
     Kad {
       socket,
       bucket: array_init(|_| VecDeque::new()),
-      expire: SkipMap::<u128, &str>::new(),
+      alive: SkipMap::<u64, &str>::new(),
+      send: SkipMap::<u64, &str>::new(),
     }
   }
-  pub fn clean(&mut self) {
-    let skipmap = &mut self.expire;
-    skipmap.insert(2, "World");
-    skipmap.insert(1, "x1");
-    skipmap.insert(2, "x2");
+  pub fn alive(&mut self) {
+    let skipmap = &mut self.alive;
+    let now = (milli()-*BEGIN_MILLI)*16;
+
+    skipmap.insert(now, "");
+    skipmap.insert(now+1, "");
 
     println!("kad clean : {:?}", skipmap);
     println!("get {} {:?}", 1, skipmap.get(&1));
