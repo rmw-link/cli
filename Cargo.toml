@@ -27,6 +27,7 @@ aes-gcm = "0.8.0"
 sqlx = { version = "0.5.1", features = ["runtime-async-std-rustls","macros","sqlite"] }
 hnsw = "0.6.1"
 array-init = "1.0.0"
+skiplist = "0.3.0"
 
 [dependencies.async-std]
 version = "1.9.0"
