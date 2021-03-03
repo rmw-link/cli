@@ -1,5 +1,6 @@
 use crate::lib::now::milli;
 use crate::var::ed25519::ED25519;
+use std::collections::HashMap;
 use array_init::array_init;
 use skiplist::SkipMap;
 use std::cmp::PartialEq;
@@ -8,11 +9,17 @@ use std::fmt::Debug;
 use std::marker::Copy;
 use std::net::{SocketAddr, SocketAddrV4};
 
+pub struct SendAliveId {
+   alive_id : u64,
+   send_id : u64,
+}
+
 pub struct Kad<'a, Addr: Debug + PartialEq + Copy, Socket> {
   bucket: [VecDeque<Addr>; 257],
   socket: &'a Socket,
   alive: SkipMap<u64, &'a str>,
   send: SkipMap<u64, &'a str>,
+  addr_id: HashMap<Addr, SendAliveId>
 }
 
 const TIMEOUT: usize = 60;
@@ -40,8 +47,10 @@ impl<'a, Addr: Debug + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       bucket: array_init(|_| VecDeque::new()),
       alive: SkipMap::<u64, &str>::new(),
       send: SkipMap::<u64, &str>::new(),
+      addr_id: HashMap::<Addr, SendAliveId>::new(),
     }
   }
+  
   pub fn ping(&mut self) {
     let skipmap = &mut self.alive;
     let now = (milli() - *BEGIN_MILLI) * 16;
