@@ -9,18 +9,23 @@ use std::fmt::Debug;
 use std::marker::Copy;
 
 #[derive(Debug)]
-pub struct AddrMeta {
+pub struct AddrPk<Addr> {
+  addr: Addr,
+  pk: [u8; 32]
+}
+
+#[derive(Debug)]
+pub struct AddrId {
   alive_id: u64,
   send_id: u64,
-  pk: [u8; 32],
 }
 
 pub struct Kad<'a, Addr: Debug + Ord + Copy, Socket> {
-  bucket: [VecDeque<Addr>; 257],
+  bucket: [VecDeque<AddrPk<Addr>>; 257],
   socket: &'a Socket,
   alive: SkipMap<u64, Addr>,
   send: SkipMap<u64, Addr>,
-  addr_id: BTreeMap<Addr, AddrMeta>,
+  addr_id: BTreeMap<Addr, AddrId>,
   _id: u64,
 }
 
@@ -49,7 +54,7 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
       bucket: array_init(|_| VecDeque::new()),
       alive: SkipMap::<u64, Addr>::new(),
       send: SkipMap::<u64, Addr>::new(),
-      addr_id: BTreeMap::<Addr, AddrMeta>::new(),
+      addr_id: BTreeMap::<Addr, AddrId>::new(),
       _id: 0,
     }
   }
@@ -75,16 +80,15 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     let id = self.id();
     self.addr_id.insert(
       addr,
-      AddrMeta {
+      AddrId {
         alive_id: id,
         send_id: id,
-        pk,
       },
     );
     self.alive.insert(id, addr);
     self.send.insert(id, addr);
     let n = comm_bit_prefix(&pk, &ED25519.public.as_bytes());
-    self.bucket[n].push_back(addr);
+    self.bucket[n].push_back(AddrPk{addr,pk});
     println!("send {:?}", self.alive);
     println!("alive {:?}", self.send);
     println!("bucket {:?}", self.bucket);
