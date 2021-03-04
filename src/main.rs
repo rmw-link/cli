@@ -14,6 +14,7 @@ mod listen;
 mod var;
 
 use init::init;
+use lib::local_ip;
 use listen::listen;
 
 #[async_std::main]
