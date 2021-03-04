@@ -11,7 +11,7 @@ use std::marker::Copy;
 #[derive(Debug)]
 pub struct AddrPk<Addr> {
   addr: Addr,
-  pk: [u8; 32]
+  pk: [u8; 32],
 }
 
 #[derive(Debug)]
@@ -88,7 +88,7 @@ impl<'a, Addr: Debug + Ord + PartialEq + Copy, Socket> Kad<'a, Addr, Socket> {
     self.alive.insert(id, addr);
     self.send.insert(id, addr);
     let n = comm_bit_prefix(&pk, &ED25519.public.as_bytes());
-    self.bucket[n].push_back(AddrPk{addr,pk});
+    self.bucket[n].push_back(AddrPk { addr, pk });
     println!("send {:?}", self.alive);
     println!("alive {:?}", self.send);
     println!("bucket {:?}", self.bucket);
